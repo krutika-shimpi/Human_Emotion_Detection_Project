@@ -11,6 +11,9 @@ In this project, we aim to develop a machine learning model that classifies emot
    - **Angry**: Images where the subject displays anger.
    - **Sad**: Images where the subject expresses sadness.
    - **Happy**: Images where the subject appears joyful.
+  
+     ![Capture](https://github.com/user-attachments/assets/d6958371-1858-4114-b5a5-92fb7c3cd012)
+
 
    This data serves as the foundation for training and evaluating the model.
 
