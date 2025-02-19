@@ -96,7 +96,174 @@ def plot_loss_curves(history, regression = None, classification = None, val_data
 
   plt.tight_layout()
   plt.show()
+
+# Let's functionize making prediction
+import numpy
+def make_predictions(model, dataset):
+  """
+    Generates predictions for a given dataset using the specified model.
+
+    Args:
+        model (tf.keras.Model or similar): The trained model used for making predictions.
+        dataset (tf.data.Dataset or iterable): A dataset containing image-label pairs.
+
+    Returns:
+        tuple:
+            - y_true (numpy.ndarray): Flattened array of true labels.
+            - y_pred (numpy.ndarray): Flattened array of predicted labels.
+
+    Note:
+        Ensure the dataset provides labels in one-hot encoded format,
+        as `np.argmax` is used to convert them into class indices.
+    """
+
+  labels = []
+  predictions = []
+
+  for image, label in dataset:
+    labels.append(label)
+    predictions.append(model(image))
+
+  y_true = np.concatenate([np.argmax(labels[:-1], axis = -1).flatten(), np.argmax(labels[-1], axis = -1).flatten()])
+  y_pred = np.concatenate([np.argmax(predictions[:-1], axis = -1).flatten(), np.argmax(predictions[-1], axis = -1).flatten()])
+
+  return y_true, y_pred
+
+
+# let's create a helper function to compare different metrics across different models
+from sklearn.metrics import accuracy_score, precision_recall_fscore_support
+def calculate_results(y_true, y_preds):
+  """
+  Returns a dictionary of all the metrics needed to compare the model.
+
+  Args:
+    y_true:
+      Ground truth labels or actual labels
+
+    y_pred:
+      Labels predicted by the model.
+  """
+  # Let's calculate the metrics
+  accuracy = accuracy_score(y_true, y_preds)
+  precision, recall, fscore, _ = precision_recall_fscore_support(y_true, y_preds, average = 'weighted')
+
+  metrics = {
+      "accuracy" : accuracy,
+      'precision' : precision,
+      'recall': recall,
+      'f1_score' : fscore
+  }
+
+  return metrics
+
   
+import pathlib 
+import os 
+import random
+import cv2
+import tensorflow as tf
+import matplotlib.pyplot as plt
+
+
+# Create a function to make predictions on multiple images picked at random
+def make_prediction_random_images(data_dir, model, CLASS_NAMES):
+
+  """
+  This function makes the predictions on randomly picked images from the given
+  directory and plots them against the truth labels.
+
+    Args:
+      - data_dir : it takes the path of the data
+      - model : the model for making predictions
+  """
+
+  # Extract paths from the data directory
+  paths = [dirnames for (dirnames, _, _) in os.walk(data_dir)][1:]
+
+  # Setup figure size
+  plt.figure(figsize = (12, 6))
+
+  for i in range(6):
+    # Plot 6 random images and make prediction on it using the model
+    plt.subplot(2, 3, i + 1)
+
+    # Randomly select a path from paths
+    random_path = random.choice(paths)
+
+    # Choose an image randomly from the random path
+    random_image = random.choice(os.listdir(random_path))
+    random_image_path = random_path + '/' + random_image
+
+    # Read image
+    read_image = cv2.imread(random_image_path)
+
+    # Resize image to expected size by the model
+    read_image = cv2.resize(read_image, (256, 256)) # Resizing to (256,256)
+
+    # Turn the image into tensor
+    image_tensor = tf.constant(read_image, dtype = tf.float32)
+
+    # Fetch the actual label from the image
+    actual_label = random_path.split('/')[-1]
+
+    # Add an extra dimension to the image
+    image_tensor_dim = tf.expand_dims(image_tensor, axis = 0)
+
+    # Make prediction on the image
+    pred_probs = model.predict(image_tensor_dim)
+
+    # Fetch predicted class label
+    pred_class_label = CLASS_NAMES[tf.argmax(pred_probs[0], axis = 0).numpy()]
+
+    # Display the images
+    plt.imshow(image_tensor/255.)
+    plt.title(f'Actual Label : {actual_label}\nPredicted Label : {pred_class_label}\nPrediction Probabilty: {np.round(max(pred_probs[0]) * 100, 2)}%')
+
+  plt.tight_layout()
+
+  return None
+
+# Create a function to make predictions on multiple images picked at random
+def make_prediction_feature_maps(data_dir, model):
+
+  """
+  This function makes the predictions on randomly picked images from the given
+  directory and returns the feature map
+
+    Args:
+      - data_dir : it takes the path of the data
+      - model : the model for making predictions
+  """
+
+  # Extract paths from the data directory
+  paths = [dirnames for (dirnames, _, _) in os.walk(data_dir)][1:]
+
+  # Randomly select a path from paths
+  random_path = random.choice(paths)
+
+  # Choose an image randomly from the random path
+  random_image = random.choice(os.listdir(random_path))
+  random_image_path = random_path + '/' + random_image
+
+  # Read image
+  read_image = cv2.imread(random_image_path)
+
+  # Resize image to expected size by the model
+  read_image = cv2.resize(read_image, (256,256)) # Resizing to (256,256)
+
+  # Turn the image into tensor
+  image_tensor = tf.constant(read_image, dtype = tf.float32)
+
+  # Fetch the actual label from the image
+  actual_label = random_path.split('/')[-1]
+
+  # Add an extra dimension to the image
+  image_tensor_dim = tf.expand_dims(image_tensor, axis = 0)
+
+  # Make prediction on the image
+  feature_maps = model.predict(image_tensor_dim)
+
+  return feature_maps
 
 def plot_random_images(model, images, true_labels, classes):
   """
