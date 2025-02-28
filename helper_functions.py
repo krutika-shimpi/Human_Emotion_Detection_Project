@@ -339,7 +339,7 @@ def make_confusion_matrix(y_true, y_pred, classes=None, figsize=(10, 10), text_s
 
   # Plot the figure and make it pretty
   fig, ax = plt.subplots(figsize=figsize)
-  cax = ax.matshow(cm, cmap=plt.cm.Blues) # colors will represent how 'correct' a class is, darker == better
+  cax = ax.matshow(cm, cmap=plt.cm.twilight) # colors will represent how 'correct' a class is, darker == better
   fig.colorbar(cax)
 
   # Are there a list of classes?
