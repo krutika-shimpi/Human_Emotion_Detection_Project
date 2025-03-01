@@ -1,6 +1,48 @@
 # Define a function to plot the loss curves
 import matplotlib.pyplot as plt
-import numpy as np 
+import numpy as np
+import json
+
+def save_model(model, filepath):
+  """
+  Saves the model by pickling the model configuration and weights separately.
+
+  Args:
+    model: The model to save.
+    filepath: The path to save the model.
+  """
+  # Save the model configuration as JSON
+  with open(filepath + '.json', 'w') as f:
+    f.write(model.to_json())
+
+  # Save the model weights, ensuring the filename ends with '.weights.h5'
+  model.save_weights(filepath + '.weights.h5') # Changed '.h5' to '.weights.h5'
+
+def load_model(filepath):
+  """
+  Loads the model from the saved configuration and weights.
+
+  Args:
+    filepath: The path to the saved model.
+
+  Returns:
+    The loaded model.
+  """
+  # Load the model configuration from JSON
+  with open(filepath + '.json', 'r') as f:
+    model_config = f.read()
+
+  # Create a new model instance from the configuration
+  model = tf.keras.models.model_from_json(model_config)
+
+  # Load the model weights, ensuring the filename ends with '.weights.h5'
+  model.load_weights(filepath + '.weights.h5') # Changed '.h5' to '.weights.h5'
+
+  return model
+
+
+
+
 def plot_loss_curves(history, regression = None, classification = None, val_data = None):
   """
   This function plots the loss curves by accepting an input parameter history.
